@@ -37,7 +37,8 @@
         "onCommand:gltf.previewModel",
         "onCommand:gltf.validateFile",
         "onCommand:gltf.exportGlbFile",
-        "onCommand:gltf.importGlbFile"
+        "onCommand:gltf.importGlbFile",
+        "onCommand:gltf.openGlbFile"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -167,6 +168,10 @@
                 "title": "glTF: Export to GLB (Binary file)"
             },
             {
+                "command": "gltf.openGlbFile",
+                "title": "glTF: Open GLB"
+            },
+            {
                 "command": "gltf.importGlbFile",
                 "title": "glTF: Import from GLB"
             },
@@ -220,7 +225,10 @@
             }
         ],
         "menus": {
-            "explorer/context": [
+            "explorer/context": [{
+                    "command": "gltf.openGlbFile",
+                    "group": "glTF"
+                },
                 {
                     "command": "gltf.importGlbFile",
                     "group": "glTF"

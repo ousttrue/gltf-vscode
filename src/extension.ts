@@ -394,6 +394,66 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     //
+    // Glb virtual file view
+    //
+    const glbScheme = 'glb';
+
+    const glbProvider = new class implements vscode.TextDocumentContentProvider {
+
+        // emitter and its event
+        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+        onDidChange = this.onDidChangeEmitter.event;
+
+        provideTextDocumentContent(uri: vscode.Uri): string {
+            // simply invoke cowsay, use uri-path as text
+            //return cowsay.say({ text: uri.path });
+
+            const path = uri.fsPath;
+            if (!path.endsWith('.glb.json')) {
+                return "invalid extension: " + path;
+            }
+
+            const contents = fs.readFileSync(path.slice(0, path.length - 5));
+
+            const magic = contents.readUInt32LE(0);
+            if (magic != 0x46546C67) {
+                return "invalid magic";
+            }
+            const version = contents.readUInt32LE(4);
+            if (version != 2) {
+                return "only version 2 is supported: " + version;
+            }
+            const length = contents.readUInt32LE(8);
+
+            // first chunk
+            const chunkLength = contents.readUInt32LE(12);
+            const chunkType = contents.readUInt32LE(16);
+            if (chunkType != 0x4E4F534A) {
+                return "first chunk is not JSON";
+            }
+
+            var json = contents.toString('utf-8', 20, 20 + chunkLength);
+            var parsed = JSON.parse(json);
+
+            // indent
+            return JSON.stringify(parsed, null, 4);
+        }
+    }
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(glbScheme, glbProvider));
+
+    context.subscriptions.push(vscode.commands.registerCommand('gltf.openGlbFile', async (fileUri: vscode.Uri) => {
+        //console.log(fileUri);
+        const uri = fileUri.toString();
+        if (!uri.startsWith('file:')) {
+            console.error('unknown uri: ' + uri);
+            return;
+        }
+        fileUri = vscode.Uri.parse(glbScheme + uri.slice(4) + ".json");
+        let doc = await vscode.workspace.openTextDocument(fileUri); // calls back into the provider
+        await vscode.window.showTextDocument(doc, { preview: false });
+    }));
+
+    //
     // Import of a GLB file and writing out its various chunks.
     //
     context.subscriptions.push(vscode.commands.registerCommand('gltf.importGlbFile', async (fileUri) => {
