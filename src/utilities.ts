@@ -1,6 +1,7 @@
 import * as jsonMap from 'json-source-map';
 import { GLTF2 } from "./GLTF2";
 import { getBuffer } from 'gltf-import-export';
+import * as fs from 'fs';
 
 export const ComponentTypeToBytesPerElement = {
     5120: Int8Array.BYTES_PER_ELEMENT,
@@ -73,6 +74,31 @@ function buildArrayBuffer<T extends ArrayLike<number>>(typedArray: any, data: Ar
     return targetBuffer;
 }
 
+function getGlbChunk(fileName: string, index: number):Uint8Array
+{
+    const contents = fs.readFileSync(fileName);
+
+    const magic = contents.readUInt32LE(0);
+    if (magic != 0x46546C67) {
+        throw "invalid magic";
+    }
+    const version = contents.readUInt32LE(4);
+    if (version != 2) {
+        throw "only version 2 is supported: " + version;
+    }
+    const length = contents.readUInt32LE(8);
+
+    // first chunk
+    const firstChunkLength = contents.readUInt32LE(12);
+    const firstChunkType = contents.readUInt32LE(16);
+
+    // second chunk
+    const secondChunkLength = contents.readUInt32LE(20+firstChunkLength);
+    const secondChunkType = contents.readUInt32LE(24+firstChunkLength);
+
+    return contents.subarray(28+firstChunkLength, 28+firstChunkLength+secondChunkLength);
+}
+
 export function getAccessorData(fileName: string, gltf: GLTF2.GLTF, accessor: GLTF2.Accessor): ArrayLike<number> | undefined {
     if (accessor.bufferView == undefined) {
         return undefined;
@@ -83,7 +109,7 @@ export function getAccessorData(fileName: string, gltf: GLTF2.GLTF, accessor: GL
         return undefined;
     }
 
-    const buffer = getBuffer(gltf, bufferView.buffer, fileName);
+    const buffer = fileName.endsWith('.gltf') ? getBuffer(gltf, bufferView.buffer, fileName) : getGlbChunk(fileName, 1);
     const bufferOffset = bufferView.byteOffset || 0;
     const bufferLength = bufferView.byteLength;
     const bufferStride = bufferView.byteStride;
