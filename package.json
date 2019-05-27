@@ -319,7 +319,7 @@
             {
                 "id": "json",
                 "extensions": [
-                    ".gltf"
+                    ".gltf", ".glb", ".vrm", ".vci"
                 ]
             }
         ],

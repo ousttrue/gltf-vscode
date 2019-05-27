@@ -409,11 +409,7 @@ export function activate(context: vscode.ExtensionContext) {
             //return cowsay.say({ text: uri.path });
 
             const path = uri.fsPath;
-            if (!path.endsWith('.glb.json')) {
-                return "invalid extension: " + path;
-            }
-
-            const contents = fs.readFileSync(path.slice(0, path.length - 5));
+            const contents = fs.readFileSync(path);
 
             const magic = contents.readUInt32LE(0);
             if (magic != 0x46546C67) {
@@ -448,7 +444,7 @@ export function activate(context: vscode.ExtensionContext) {
             console.error('unknown uri: ' + uri);
             return;
         }
-        fileUri = vscode.Uri.parse(glbScheme + uri.slice(4) + ".json");
+        fileUri = vscode.Uri.parse(glbScheme + uri.slice(4));
         let doc = await vscode.workspace.openTextDocument(fileUri); // calls back into the provider
         await vscode.window.showTextDocument(doc, { preview: false });
     }));
