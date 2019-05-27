@@ -7,6 +7,19 @@ function isGltfFile(editor: vscode.TextEditor | undefined): boolean {
     return editor && editor.document.fileName.toLowerCase().endsWith('.gltf');
 }
 
+function isGlbFile(editor: vscode.TextEditor | undefined): boolean {
+    if(!editor){
+        return false;
+    }
+    for(const ext of ['.glb', '.vrm', '.vci'])
+    {
+        if (editor.document.fileName.toLowerCase().endsWith(ext)){
+            return true;
+        }
+    }
+    return false;
+}
+
 export class GltfWindow {
     private _gltfPreview: GltfPreview;
     private _gltfInspectData: GltfInspectData;
@@ -68,7 +81,7 @@ export class GltfWindow {
         if (activeTextEditor) {
             gltfPreviewActive = true;
         }
-        else if (isGltfFile(vscode.window.activeTextEditor)) {
+        else if (isGltfFile(vscode.window.activeTextEditor) || isGlbFile(vscode.window.activeTextEditor)) {
             activeTextEditor = vscode.window.activeTextEditor;
             gltfFileActive = true;
         }

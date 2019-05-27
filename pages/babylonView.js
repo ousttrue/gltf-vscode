@@ -93,9 +93,13 @@
             var defaultBabylonReflection = document.getElementById('defaultBabylonReflection').textContent;
             var rootPath = document.getElementById('gltfRootPath').textContent;
             var gltfContent = document.getElementById('gltf').textContent;
+            var gltfFileName = document.getElementById('gltfFileName').textContent;
 
             BABYLON.GLTFFileLoader.IncrementalLoading = false;
-            BABYLON.SceneLoader.AppendAsync(rootPath, 'data:' + gltfContent, scene, undefined, '.gltf').then(function () {
+            let path = gltfFileName.endsWith('.gltf') ? 'data:' + gltfContent : gltfFileName;
+            let ext = gltfFileName.endsWith('.gltf') ? '.gltf' : '.glb';
+
+            BABYLON.SceneLoader.AppendAsync(rootPath, path, scene, undefined, ext).then(function () {
                 scene.createDefaultCameraOrLight(true);
                 scene.activeCamera.attachControl(canvas);
                 scene.activeCamera.wheelDeltaPercentage = 0.005;
