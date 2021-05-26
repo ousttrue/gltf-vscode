@@ -457,6 +457,65 @@ export function activate(context: vscode.ExtensionContext): void {
         }
     }));
 
+    let glbProvider = new class implements vscode.TextDocumentContentProvider {
+
+        // emitter and its event
+        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+        onDidChange = this.onDidChangeEmitter.event;
+
+        provideTextDocumentContent(uri: vscode.Uri): string {
+
+            let data = fs.readFileSync(uri.fsPath);
+            var offset = 0;
+            if (data.readInt32LE(offset) != 0x46546C67) {
+                return `not glb`;
+            }
+            offset += 4;
+
+            let version = data.readInt32LE(offset)
+            if (version != 2) {
+                return `gltf version ${version} not support`;
+            }
+            offset += 4;
+
+            let length = data.readInt32LE(offset);
+            offset += 4;
+
+            while (offset < length) {
+
+                let chunkLength = data.readInt32LE(offset);
+                offset += 4;
+
+                let chunkType = data.readInt32LE(offset);
+                offset += 4;
+
+                let chunkData = data.toString('utf8', offset, offset + chunkLength);
+                offset += chunkLength;
+
+                if (chunkType == 0x4E4F534A) {
+
+                    return chunkData;
+
+                }
+            }
+
+            return `json chunk is not found`;
+        }
+    };
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('glb', glbProvider));
+
+    //
+    // open GLB directly.
+    //
+    context.subscriptions.push(vscode.commands.registerCommand('gltf.openGlbFile', async (fileUri) => {
+
+        const uri = vscode.Uri.parse('glb:' + fileUri.fsPath);
+        const doc = await vscode.workspace.openTextDocument(uri); // calls back into the provider
+        vscode.languages.setTextDocumentLanguage(doc, "json");
+        await vscode.window.showTextDocument(doc, { preview: false });
+
+    }));
+
     //
     // Run the validator on an external file.
     //
