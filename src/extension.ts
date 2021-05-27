@@ -481,6 +481,8 @@ export function activate(context: vscode.ExtensionContext): void {
             let length = data.readInt32LE(offset);
             offset += 4;
 
+            var json = null;
+            var binOffset = null;
             while (offset < length) {
 
                 let chunkLength = data.readInt32LE(offset);
@@ -490,16 +492,39 @@ export function activate(context: vscode.ExtensionContext): void {
                 offset += 4;
 
                 let chunkData = data.toString('utf8', offset, offset + chunkLength);
-                offset += chunkLength;
 
                 if (chunkType == 0x4E4F534A) {
 
-                    return JSON.stringify(JSON.parse(chunkData), null, '  ');
+                    var json = JSON.parse(chunkData);
 
                 }
+                else if (chunkType == 0x004E4942) {
+
+                    binOffset = offset;
+
+                }
+                else {
+                    // unknown
+                }
+
+                offset += chunkLength;
             }
 
-            return `json chunk is not found`;
+            if (binOffset && json) {
+
+                // buffer access hack
+                json.buffers[0]['uri'] = path.basename(uri.fsPath);
+                for (let bufferView of json.bufferViews) {
+                    bufferView.byteOffset += binOffset;
+                }
+
+                return JSON.stringify(json, null, '  ');
+            }
+            else {
+
+                return `invalid glb`;
+
+            }
         }
     };
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('glb', glbProvider));
