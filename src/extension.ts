@@ -465,9 +465,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
         provideTextDocumentContent(uri: vscode.Uri): string {
 
-            // remove ".gltf"
-            let path = uri.fsPath.slice(0, -5);
-            let data = fs.readFileSync(path);
+            let data = fs.readFileSync(uri.fsPath);
             var offset = 0;
             if (data.readInt32LE(offset) != 0x46546C67) {
                 return `not glb`;
@@ -511,7 +509,7 @@ export function activate(context: vscode.ExtensionContext): void {
     //
     context.subscriptions.push(vscode.commands.registerCommand('gltf.openGlbFile', async (fileUri) => {
 
-        const uri = vscode.Uri.parse('glb:' + fileUri.fsPath + '.gltf');
+        const uri = vscode.Uri.parse('glb:' + fileUri.fsPath);
         const doc = await vscode.workspace.openTextDocument(uri); // calls back into the provider
         vscode.languages.setTextDocumentLanguage(doc, "json");
         await vscode.window.showTextDocument(doc, { preview: true });
