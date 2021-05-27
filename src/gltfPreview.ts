@@ -107,7 +107,7 @@ export class GltfPreview extends ContextBase {
         }
 
         const gltfContent = gltfEditor.document.getText();
-        this.updatePanel(panel, gltfFilePath, gltfContent);
+        this.updatePanel(panel, gltfEditor.document.uri, gltfContent);
         panel.reveal(vscode.ViewColumn.Two);
 
         this.setActivePanel(panel);
@@ -144,7 +144,7 @@ export class GltfPreview extends ContextBase {
         this.setActivePanel(activePanel);
     }
 
-    private updatePanel(panel: GltfPreviewPanelInfo, gltfFilePath: string, gltfContent: string): void {
+    private updatePanel(panel: GltfPreviewPanelInfo, uri: vscode.Uri, gltfContent: string): void {
         let map: JsonMap<GLTF2.GLTF>;
         try {
             map = parseJsonMap(gltfContent);
@@ -154,6 +154,7 @@ export class GltfPreview extends ContextBase {
         }
         panel._jsonMap = map;
 
+        let gltfFilePath = uri.fsPath;
         const gltfRootPath = this.asWebviewUriString(panel, path.dirname(gltfFilePath)) + '/';
         const gltfFileName = path.basename(gltfFilePath);
 
@@ -278,7 +279,7 @@ export class GltfPreview extends ContextBase {
         const document = panel.textEditor.document;
         const documentFilePath = document.fileName;
         panel._watchers.push(fs.watch(documentFilePath, () => {
-            this.updatePanel(panel, documentFilePath, document.getText());
+            this.updatePanel(panel, document.uri, document.getText());
         }));
 
         const documentDirectoryPath = path.dirname(documentFilePath);
